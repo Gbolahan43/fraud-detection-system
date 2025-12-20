@@ -77,7 +77,7 @@ nupat-fraud-detection/
 ├── requirements.txt                   # Python dependencies
 ├── README.md                          # This file
 ├── .gitignore                         # Git ignore rules
-└── setup.py                           # Package setup
+   
 ```
 
 ---
