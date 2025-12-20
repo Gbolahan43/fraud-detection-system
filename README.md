@@ -1,5 +1,11 @@
 # 🛡️ NUPAT AI Fellowship - Fraud Detection System
 
+**Live Demo**: [https://fraudml-app.streamlit.app/](https://fraudml-app.streamlit.app/)
+
+> A machine learning-powered fraud detection system for cryptocurrency trading platforms, built for the NUPAT AI Fellowship Stage Two Assessment.
+
+---
+
 A comprehensive fraud detection system for cryptocurrency trading platforms, built with machine learning and interactive visualizations.
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
@@ -38,6 +44,15 @@ This project was developed as part of the NUPAT AI Fellowship Stage Two Assessme
 
 ---
 
+## 🚀 Live Demo
+
+Access the deployed application here:
+
+**👉 [https://fraudml-app.streamlit.app/](https://fraudml-app.streamlit.app/)**
+
+Try the fraud detection tool with sample data or explore the analytics dashboard!
+
+---
 ## ✨ Features
 
 - **📊 Comprehensive Dashboard**: Real-time metrics and KPIs
