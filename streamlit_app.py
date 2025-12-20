@@ -44,6 +44,12 @@ st.markdown("""
         padding: 1rem;
         margin: 1rem 0;
     }
+    .danger-box {
+        background-color: #f8d7da;
+        border-left: 4px solid #dc3545;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -53,12 +59,14 @@ def load_models():
     try:
         lr_model = joblib.load('models/logistic_regression_model.pkl')
         rf_model = joblib.load('models/random_forest_model.pkl')
+        xgb_model = joblib.load('models/xgboost_model.pkl')
         scaler = joblib.load('models/scaler.pkl')
         with open('models/feature_columns.pkl', 'rb') as f:
             feature_columns = pickle.load(f)
-        return lr_model, rf_model, scaler, feature_columns
-    except FileNotFoundError:
-        return None, None, None, None
+        return lr_model, rf_model, xgb_model, scaler, feature_columns
+    except FileNotFoundError as e:
+        st.error(f"Model file not found: {e}. Please run model_saver.py first.")
+        return None, None, None, None, None
 
 @st.cache_data
 def load_data():
@@ -71,7 +79,7 @@ def load_data():
         return None, None, None
 
 # Load resources
-lr_model, rf_model, scaler, feature_columns = load_models()
+lr_model, rf_model, xgb_model, scaler, feature_columns = load_models()
 trades, user_activity, features = load_data()
 
 # Sidebar
@@ -80,13 +88,14 @@ st.sidebar.markdown("---")
 
 app_mode = st.sidebar.selectbox(
     "Choose Mode",
-    ["📊 Dashboard", "🔍 Fraud Detection", "📈 Analytics", "ℹ️ About"]
+    ["📊 Dashboard", "🔍 Fraud Detection", "📈 Analytics", "🔬 Model Comparison", "ℹ️ About"]
 )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### System Status")
-if lr_model and rf_model:
-    st.sidebar.success("✅ Models Loaded")
+if all([lr_model, rf_model, xgb_model]):
+    st.sidebar.success("✅ All Models Loaded")
+    st.sidebar.info("📊 3 Models: LR, RF, XGB")
 else:
     st.sidebar.error("❌ Models Not Found")
 
@@ -159,21 +168,6 @@ if app_mode == "📊 Dashboard":
                     title="User Activity Frequency"
                 )
                 st.plotly_chart(fig, use_container_width=True)
-
-        # Recent trends
-        st.subheader("📈 Trading Activity Trends")
-        if trades is not None:
-            trades['timestamp'] = pd.to_datetime(trades['timestamp'])
-            daily_trades = trades.groupby(trades['timestamp'].dt.date).size().reset_index()
-            daily_trades.columns = ['date', 'count']
-
-            fig = px.line(
-                daily_trades,
-                x='date',
-                y='count',
-                title="Daily Trading Volume"
-            )
-            st.plotly_chart(fig, use_container_width=True)
     else:
         st.error("⚠️ Data not loaded. Please ensure data files are in the correct location.")
 
@@ -226,7 +220,7 @@ elif app_mode == "🔍 Fraud Detection":
     trade_to_deposit_ratio = total_trade_volume_usd / (total_deposited/1500) if total_deposited > 0 else 0
 
     if st.button("🔍 Analyze User", type="primary"):
-        if lr_model and rf_model and scaler and feature_columns:
+        if all([lr_model, rf_model, xgb_model, scaler, feature_columns]):
             # Prepare features
             user_features = {
                 'total_deposited': total_deposited,
@@ -251,31 +245,61 @@ elif app_mode == "🔍 Fraud Detection":
             X = X.fillna(0).replace([np.inf, -np.inf], 999)
             X_scaled = scaler.transform(X)
 
-            # Predictions
+            # Predictions from all models
             lr_pred = lr_model.predict(X_scaled)[0]
             lr_proba = lr_model.predict_proba(X_scaled)[0][1]
 
             rf_pred = rf_model.predict(X_scaled)[0]
             rf_proba = rf_model.predict_proba(X_scaled)[0][1]
 
+            xgb_pred = xgb_model.predict(X_scaled)[0]
+            xgb_proba = xgb_model.predict_proba(X_scaled)[0][1]
+
             st.markdown("---")
             st.markdown("### 📊 Analysis Results")
 
-            col1, col2 = st.columns(2)
+            col1, col2, col3 = st.columns(3)
 
             with col1:
                 st.markdown("#### Logistic Regression")
                 if lr_pred == 1:
-                    st.markdown(f'<div class="warning-box">⚠️ <b>SUSPICIOUS USER</b><br>Fraud Probability: {lr_proba*100:.2f}%</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="warning-box">⚠️ <b>SUSPICIOUS</b><br>Probability: {lr_proba*100:.2f}%</div>', unsafe_allow_html=True)
                 else:
-                    st.markdown(f'<div class="success-box">✅ <b>LEGITIMATE USER</b><br>Fraud Probability: {lr_proba*100:.2f}%</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="success-box">✅ <b>LEGITIMATE</b><br>Probability: {lr_proba*100:.2f}%</div>', unsafe_allow_html=True)
 
             with col2:
                 st.markdown("#### Random Forest")
                 if rf_pred == 1:
-                    st.markdown(f'<div class="warning-box">⚠️ <b>SUSPICIOUS USER</b><br>Fraud Probability: {rf_proba*100:.2f}%</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="warning-box">⚠️ <b>SUSPICIOUS</b><br>Probability: {rf_proba*100:.2f}%</div>', unsafe_allow_html=True)
                 else:
-                    st.markdown(f'<div class="success-box">✅ <b>LEGITIMATE USER</b><br>Fraud Probability: {rf_proba*100:.2f}%</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="success-box">✅ <b>LEGITIMATE</b><br>Probability: {rf_proba*100:.2f}%</div>', unsafe_allow_html=True)
+
+            with col3:
+                st.markdown("#### XGBoost 🚀")
+                if xgb_pred == 1:
+                    st.markdown(f'<div class="danger-box">🚨 <b>SUSPICIOUS</b><br>Probability: {xgb_proba*100:.2f}%</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="success-box">✅ <b>LEGITIMATE</b><br>Probability: {xgb_proba*100:.2f}%</div>', unsafe_allow_html=True)
+
+            # Consensus
+            st.markdown("---")
+            st.markdown("### 🎯 Model Consensus")
+
+            predictions = [lr_pred, rf_pred, xgb_pred]
+            suspicious_votes = sum(predictions)
+
+            if suspicious_votes == 3:
+                st.error("🚨 **ALL 3 MODELS AGREE: HIGHLY SUSPICIOUS USER**")
+            elif suspicious_votes == 2:
+                st.warning("⚠️ **MAJORITY (2/3) VOTE: LIKELY SUSPICIOUS**")
+            elif suspicious_votes == 1:
+                st.info("ℹ️ **SPLIT DECISION: REVIEW RECOMMENDED**")
+            else:
+                st.success("✅ **ALL 3 MODELS AGREE: LEGITIMATE USER**")
+
+            # Average probability
+            avg_proba = (lr_proba + rf_proba + xgb_proba) / 3
+            st.metric("Average Fraud Probability", f"{avg_proba*100:.2f}%")
 
             st.markdown("---")
             st.markdown("### 🔎 Key Indicators")
@@ -317,19 +341,8 @@ elif app_mode == "📈 Analytics":
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            st.subheader("Trade Count vs Trade Volume")
-            fig = px.scatter(
-                features,
-                x='trade_count',
-                y='total_trade_volume_usd',
-                color='is_suspicious' if 'is_suspicious' in features.columns else None,
-                title="Trading Patterns"
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
         with tabs[1]:
             st.subheader("User Segmentation")
-
             segments = pd.DataFrame({
                 'Segment': ['High Activity', 'Medium Activity', 'Low Activity', 'Inactive'],
                 'Count': [
@@ -339,7 +352,6 @@ elif app_mode == "📈 Analytics":
                     len(features[features['activity_frequency'] == 0])
                 ]
             })
-
             fig = px.bar(segments, x='Segment', y='Count', title="User Activity Segments")
             st.plotly_chart(fig, use_container_width=True)
 
@@ -349,19 +361,71 @@ elif app_mode == "📈 Analytics":
                 deposits = user_activity[user_activity['activity_type'] == 'deposit']
                 deposits['timestamp'] = pd.to_datetime(deposits['timestamp'])
                 deposits['hour'] = deposits['timestamp'].dt.hour
-
                 hourly_deposits = deposits.groupby('hour').size().reset_index()
                 hourly_deposits.columns = ['hour', 'count']
-
-                fig = px.bar(
-                    hourly_deposits,
-                    x='hour',
-                    y='count',
-                    title="Deposit Activity by Hour of Day"
-                )
+                fig = px.bar(hourly_deposits, x='hour', y='count', title="Deposit Activity by Hour of Day")
                 st.plotly_chart(fig, use_container_width=True)
     else:
         st.error("⚠️ Data not loaded.")
+
+elif app_mode == "🔬 Model Comparison":
+    st.markdown('<div class="main-header">🔬 Model Performance Comparison</div>', unsafe_allow_html=True)
+
+    st.markdown("""
+    ### Three Models in Action
+
+    This system uses an ensemble of three different machine learning models:
+
+    1. **Logistic Regression** - Fast, interpretable baseline
+    2. **Random Forest** - Ensemble of decision trees
+    3. **XGBoost** - Gradient boosting, often the best performer
+
+    Each model has different strengths, and comparing their predictions gives us higher confidence.
+    """)
+
+    if all([lr_model, rf_model, xgb_model]):
+        st.markdown("---")
+        st.subheader("📊 Model Characteristics")
+
+        comparison_data = {
+            'Model': ['Logistic Regression', 'Random Forest', 'XGBoost'],
+            'Type': ['Linear', 'Ensemble (Bagging)', 'Ensemble (Boosting)'],
+            'Speed': ['⚡ Very Fast', '⚡⚡ Fast', '⚡⚡⚡ Medium'],
+            'Interpretability': ['High', 'Medium', 'Medium'],
+            'Handles Imbalance': ['Good', 'Good', 'Excellent'],
+            'Best For': ['Linear patterns', 'Non-linear patterns', 'Complex patterns']
+        }
+
+        comparison_df = pd.DataFrame(comparison_data)
+        st.dataframe(comparison_df, use_container_width=True, hide_index=True)
+
+        st.markdown("---")
+        st.subheader("🎯 When Models Disagree")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("""
+            **High Confidence Scenarios:**
+            - ✅ All 3 models agree → Very reliable
+            - ✅ 2 models agree → Reliable
+
+            **Review Needed:**
+            - ⚠️ Split decision (1 vs 2) → Manual review
+            - ⚠️ Low probability scores → Borderline case
+            """)
+
+        with col2:
+            st.markdown("""
+            **Model Strengths:**
+            - **Logistic Regression:** Good for simple fraud patterns
+            - **Random Forest:** Handles complex interactions
+            - **XGBoost:** Best overall performance, handles imbalance
+            """)
+
+        st.info("💡 **Pro Tip**: When all three models agree, confidence is highest. XGBoost tends to be most accurate for fraud detection.")
+    else:
+        st.error("⚠️ Models not loaded.")
 
 elif app_mode == "ℹ️ About":
     st.markdown('<div class="main-header">ℹ️ About This System</div>', unsafe_allow_html=True)
@@ -373,10 +437,11 @@ elif app_mode == "ℹ️ About":
 
     #### 🎯 Features
 
-    - **Real-time Fraud Detection**: Analyze user behavior patterns to identify suspicious activity
-    - **Multiple ML Models**: Utilizes Logistic Regression and Random Forest classifiers
-    - **Comprehensive Analytics**: Visualize trading patterns, user segments, and deposit trends
-    - **Interactive Dashboard**: Monitor system metrics and key performance indicators
+    - **Real-time Fraud Detection**: Analyze user behavior patterns with 3 ML models
+    - **Multiple ML Models**: Logistic Regression, Random Forest, and XGBoost
+    - **Model Consensus**: Higher confidence when models agree
+    - **Comprehensive Analytics**: Visualize trading patterns and user segments
+    - **Interactive Dashboard**: Monitor system metrics and KPIs
 
     #### 🔍 Fraud Detection Criteria
 
@@ -391,27 +456,19 @@ elif app_mode == "ℹ️ About":
 
     - **Logistic Regression**: Fast, interpretable baseline model
     - **Random Forest**: Ensemble model capturing complex patterns
+    - **XGBoost**: State-of-the-art gradient boosting (often best performer)
 
     #### 👨‍💻 Technical Stack
 
-    - **Backend**: Python, scikit-learn, pandas, numpy
+    - **Backend**: Python, scikit-learn, XGBoost, pandas, numpy
     - **Frontend**: Streamlit
     - **Visualization**: Plotly, matplotlib, seaborn
-
-    #### 📝 Data Sources
-
-    - `trades.csv`: Trading transactions data
-    - `user_activitycsv.csv`: User deposits and withdrawals
 
     ---
 
     **Developed for**: NUPAT AI Fellowship Stage Two Assessment  
     **Date**: December 2025
     """)
-
-    st.markdown("---")
-    st.markdown("### 📧 Contact & Support")
-    st.info("For questions or support, please contact the development team.")
 
 # Footer
 st.sidebar.markdown("---")

@@ -168,6 +168,7 @@ This creates:
 - `models/random_forest_model.pkl`
 - `models/scaler.pkl`
 - `models/feature_columns.pkl`
+- `xgboost_model.pkl`
 
 ### 3. Launch Streamlit App
 
@@ -419,7 +420,7 @@ streamlit run streamlit_app.py --server.port 8502
 ## 📚 Documentation
 
 ### Notebooks
-- **NUPAT_AI_Fellowship_Analysis.ipynb**: Complete data analysis with markdown explanations
+- **analysis.ipynb**: Complete data analysis with markdown explanations
 
 ### Code Comments
 All major functions include docstrings explaining:
@@ -472,9 +473,9 @@ Stage Two Assessment - December 2025
 ## 📞 Contact
 
 For questions or support:
-- **Email**: your.email@example.com
-- **GitHub**: [@yourusername](https://github.com/yourusername)
-- **LinkedIn**: [Your Name](https://linkedin.com/in/yourprofile)
+- **Email**: gbolahanbasit43@gmail.com
+- **GitHub**: [Olanrewaju Abdulbasit](https://github.com/Gbolahan43)
+- **LinkedIn**: [Olanrewaju Abdulbasit](https://linkedin.com/in/abdulbasit-olanrewaju-gbolahan)
 
 ---
 
