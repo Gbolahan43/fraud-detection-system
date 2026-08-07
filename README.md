@@ -1,4 +1,4 @@
-# 🛡️ NUPAT AI Fellowship - Fraud Detection System
+# Fraud Detection System
 
 **Live Demo**: [https://fraudml-app.streamlit.app/](https://fraudml-app.streamlit.app/)
 
