@@ -2,7 +2,7 @@
 
 **Live Demo**: [https://fraudml-app.streamlit.app/](https://fraudml-app.streamlit.app/)
 
-> A machine learning-powered fraud detection system for cryptocurrency trading platforms, built for the NUPAT AI Fellowship Stage Two Assessment.
+> An interactive machine learning fraud detection application for cryptocurrency trading platforms.
 
 ---
 
@@ -33,14 +33,14 @@ A comprehensive fraud detection system for cryptocurrency trading platforms, bui
 
 ## 🎯 Overview
 
-This project was developed as part of the NUPAT AI Fellowship Stage Two Assessment. It analyzes cryptocurrency trading platform data to identify potentially fraudulent users based on behavioral patterns.
+This project provides tools to analyze cryptocurrency trading platform data and identify potentially fraudulent users based on behavioral patterns.
 
 ### Key Objectives
 
 1. **Exploratory Data Analysis**: Understand market dynamics and user behavior
-2. **Fraud Detection**: Build ML models to identify suspicious users
+2. **Fraud Detection**: Deploy models that flag suspicious users for review
 3. **Strategic Insights**: Provide data-driven recommendations for business decisions
-4. **Interactive Interface**: Deploy models via Streamlit for real-time analysis
+4. **Interactive Interface**: Use the Streamlit app for interactive analysis and predictions
 
 ---
 
@@ -67,7 +67,7 @@ Try the fraud detection tool with sample data or explore the analytics dashboard
 ## 📁 Project Structure
 
 ```
-nupat-fraud-detection/
+fraud-detection-system/
 │
 ├── data/
 │   ├── trades.csv                      # Trading transactions
@@ -85,15 +85,15 @@ nupat-fraud-detection/
 │   └── feature_columns.pkl            # Feature names
 │
 ├── notebooks/
-│   └── NUPAT_AI_Fellowship_Analysis.ipynb  # Main analysis notebook
+│   └── analysis.ipynb                 # Optional analysis notebook
 │
 ├── streamlit_app.py                   # Main Streamlit application
 ├── model_saver.py                     # Script to save trained models
 ├── requirements.txt                   # Python dependencies
 ├── README.md                          # This file
 ├── .gitignore                         # Git ignore rules
-   
-```
+
+``` 
 
 ---
 
@@ -108,8 +108,8 @@ nupat-fraud-detection/
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/nupat-fraud-detection.git
-cd nupat-fraud-detection
+git clone https://github.com/yourusername/fraud-detection-system.git
+cd fraud-detection-system
 ```
 
 ### Step 2: Create Virtual Environment
@@ -158,54 +158,45 @@ data/
 
 ## 📊 Usage
 
-### 1. Run the Jupyter Notebook
+### 1. (Optional) Run the analysis notebook
 
 ```bash
-jupyter notebook notebooks/NUPAT_AI_Fellowship_Analysis.ipynb
+jupyter notebook notebooks/analysis.ipynb
 ```
 
-Execute all cells to:
-- Perform exploratory data analysis
-- Engineer features
-- Train models
-- Generate visualizations
+Run cells in the notebook to reproduce feature engineering, model training, and exploratory analyses.
 
 ### 2. Save Trained Models
 
-After running the notebook, save models for Streamlit:
+After running the notebook (or your training pipeline), save models for the Streamlit app:
 
 ```bash
 python model_saver.py
 ```
 
-This creates:
-- `models/logistic_regression_model.pkl`
-- `models/random_forest_model.pkl`
-- `models/scaler.pkl`
-- `models/feature_columns.pkl`
-- `xgboost_model.pkl`
+This creates the model artifacts used by the app in the `models/` directory.
 
-### 3. Launch Streamlit App
+### 2. Launch Streamlit App
 
 ```bash
 streamlit run streamlit_app.py
 ```
 
-The app will open in your browser at `http://localhost:8501`
+The app will open in your browser at `http://localhost:8501`.
 
 ### 4. Using the Interface
 
-#### Dashboard Tab
+### Dashboard Tab
 - View system metrics and KPIs
 - Monitor fraud distribution
 - Track trading activity trends
 
-#### Fraud Detection Tab
+### Fraud Detection Tab
 - Enter user information manually
 - Get real-time fraud predictions
 - View key risk indicators
 
-#### Analytics Tab
+### Analytics Tab
 - Explore trading patterns
 - Analyze user segments
 - Study deposit behaviors
@@ -471,8 +462,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-**NUPAT AI Fellowship Participant**  
-Stage Two Assessment - December 2025
+**Abdulbasit Olanrewaju Gbolahan**  
+- December 2025
 
 ---
 

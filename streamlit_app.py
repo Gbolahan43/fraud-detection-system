@@ -10,7 +10,7 @@ from pathlib import Path
 
 # Page configuration
 st.set_page_config(
-    page_title="NUPAT Fraud Detection System",
+    page_title="Fraud Detection System",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -106,7 +106,7 @@ else:
 
 # Main content
 if app_mode == "📊 Dashboard":
-    st.markdown('<div class="main-header">🛡️ NUPAT Fraud Detection Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">🛡️ Fraud Detection Dashboard</div>', unsafe_allow_html=True)
 
     if features is not None:
         col1, col2, col3, col4 = st.columns(4)
@@ -431,7 +431,7 @@ elif app_mode == "ℹ️ About":
     st.markdown('<div class="main-header">ℹ️ About This System</div>', unsafe_allow_html=True)
 
     st.markdown("""
-    ### NUPAT AI Fellowship - Fraud Detection System
+    ### Fraud Detection System
 
     This system analyzes cryptocurrency trading platform data to detect potentially fraudulent users.
 
@@ -466,11 +466,11 @@ elif app_mode == "ℹ️ About":
 
     ---
 
-    **Developed for**: NUPAT AI Fellowship Stage Two Assessment  
+    **Developed by**: Abdulbasit Olanrewaju  
     **Date**: December 2025
     """)
 
 # Footer
 st.sidebar.markdown("---")
-st.sidebar.markdown("**NUPAT AI Fellowship** | Stage Two Assessment")
+st.sidebar.markdown("**Fraud Detection System** - Version 1.0")
 st.sidebar.markdown(f"Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
