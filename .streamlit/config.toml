@@ -1,0 +1,8 @@
+[theme]
+# The app's custom CSS and Plotly figures are built around a dark slate palette,
+# so pin the base theme rather than inheriting the viewer's OS preference.
+base = "dark"
+backgroundColor = "#0f172a"
+secondaryBackgroundColor = "#1e293b"
+textColor = "#e2e8f0"
+primaryColor = "#38bdf8"
