@@ -8,10 +8,10 @@
 
 A comprehensive fraud detection system for cryptocurrency trading platforms, built with machine learning and interactive visualizations.
 
-![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.29.0-FF4B4B.svg)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3.2-F7931E.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Python](https://img.shields.io/badge/Python-3.14-blue.svg)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.52.2-FF4B4B.svg)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-1.8.0-F7931E.svg)
+![XGBoost](https://img.shields.io/badge/XGBoost-3.1.2-006600.svg)
 
 ---
 
@@ -27,18 +27,17 @@ A comprehensive fraud detection system for cryptocurrency trading platforms, bui
 - [Streamlit Interface](#streamlit-interface)
 - [Results](#results)
 - [Contributing](#contributing)
-- [License](#license)
 
 ---
 
 ## 🎯 Overview
 
-This project provides tools to analyze cryptocurrency trading platform data and identify potentially fraudulent users based on behavioral patterns.
+This project provides tools to analyze cryptocurrency trading platform data and identify potentially fraudulent users based on behavioral patterns. Three models (Logistic Regression, Random Forest, XGBoost) vote on every user, and their consensus drives the risk rating.
 
 ### Key Objectives
 
 1. **Exploratory Data Analysis**: Understand market dynamics and user behavior
-2. **Fraud Detection**: Deploy models that flag suspicious users for review
+2. **Fraud Detection**: Deploy an ensemble that flags suspicious users for review
 3. **Strategic Insights**: Provide data-driven recommendations for business decisions
 4. **Interactive Interface**: Use the Streamlit app for interactive analysis and predictions
 
@@ -55,12 +54,14 @@ Try the fraud detection tool with sample data or explore the analytics dashboard
 ---
 ## ✨ Features
 
-- **📊 Comprehensive Dashboard**: Real-time metrics and KPIs
-- **🔍 Fraud Detection Engine**: Multi-model approach (Logistic Regression + Random Forest)
+- **📊 Comprehensive Dashboard**: 8 KPIs, fraud distribution, top trading pairs, BTCNGN volatility
+- **🔍 Fraud Detection Engine**: 3-model ensemble (Logistic Regression + Random Forest + XGBoost) with consensus voting
+- **🧾 Three Input Modes**: Manual entry, existing-user lookup, and batch CSV upload
+- **🚦 Risk Levels**: Low / Medium / High / Extreme, derived from model votes and average probability
 - **📈 Advanced Analytics**: Trading patterns, user segmentation, deposit analysis
-- **🎨 Interactive Visualizations**: Built with Plotly for dynamic exploration
-- **⚡ Real-time Predictions**: Instant user risk assessment
-- **📱 Responsive Design**: Works on desktop and mobile
+- **🔬 Model Comparison**: Accuracy, precision, recall and F1 on the held-out test split
+- **🎨 Interactive Visualizations**: Built with Plotly, on a consistent dark theme
+- **📥 Export Results**: Download single or batch analyses as CSV
 
 ---
 
@@ -81,14 +82,21 @@ fraud-detection-system/
 ├── models/
 │   ├── logistic_regression_model.pkl  # Trained LR model
 │   ├── random_forest_model.pkl        # Trained RF model
+│   ├── xgboost_model.pkl              # Trained XGBoost model
 │   ├── scaler.pkl                     # Feature scaler
-│   └── feature_columns.pkl            # Feature names
+│   └── feature_columns.pkl            # Feature names + training order
 │
 ├── notebooks/
-│   └── analysis.ipynb                 # Optional analysis notebook
+│   └── analysis.ipynb                 # Analysis notebook
+│
+├── .streamlit/
+│   └── config.toml                    # Pins the dark theme the app is built for
+│
+├── .devcontainer/
+│   └── devcontainer.json              # Codespaces / dev container setup
 │
 ├── streamlit_app.py                   # Main Streamlit application
-├── model_saver.py                     # Script to save trained models
+├── model_saver.py                     # Trains and saves the model artifacts
 ├── requirements.txt                   # Python dependencies
 ├── README.md                          # This file
 ├── .gitignore                         # Git ignore rules
@@ -101,7 +109,7 @@ fraud-detection-system/
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.11+ (developed on 3.14 — see `.python-version`)
 - pip (Python package manager)
 - Git (optional)
 
@@ -131,18 +139,15 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-**Core Dependencies:**
-- `pandas==2.1.4` - Data manipulation
-- `numpy==1.26.2` - Numerical computing
-- `scikit-learn==1.3.2` - Machine learning
-- `streamlit==1.29.0` - Web interface
-- `plotly==5.18.0` - Interactive visualizations
-- `matplotlib==3.8.2` - Static plots
-- `seaborn==0.13.0` - Statistical visualizations
-- `joblib==1.3.2` - Model persistence
-
-**Optional:**
-- `xgboost==2.0.3` - Gradient boosting (if available)
+**Core Dependencies** (pinned in `requirements.txt`):
+- `pandas==2.3.3` - Data manipulation
+- `numpy==2.3.5` - Numerical computing
+- `scikit-learn==1.8.0` - Machine learning
+- `xgboost==3.1.2` - Gradient boosting (required — the app loads all three models)
+- `streamlit==1.52.2` - Web interface
+- `plotly==6.5.0` - Interactive visualizations
+- `joblib==1.5.3` - Model persistence
+- `matplotlib==3.10.8` / `seaborn==0.13.2` - Static plots used in the notebook
 
 ### Step 4: Set Up Data
 
@@ -174,9 +179,11 @@ After running the notebook (or your training pipeline), save models for the Stre
 python model_saver.py
 ```
 
-This creates the model artifacts used by the app in the `models/` directory.
+This trains all three models on an 80/20 stratified split and writes the artifacts
+to `models/`. The app reads the feature order back from `feature_columns.pkl`, so
+retraining with a different feature set stays in sync automatically.
 
-### 2. Launch Streamlit App
+### 3. Launch Streamlit App
 
 ```bash
 streamlit run streamlit_app.py
@@ -186,20 +193,32 @@ The app will open in your browser at `http://localhost:8501`.
 
 ### 4. Using the Interface
 
-### Dashboard Tab
-- View system metrics and KPIs
-- Monitor fraud distribution
-- Track trading activity trends
+Pick a section from the sidebar dropdown:
 
-### Fraud Detection Tab
-- Enter user information manually
-- Get real-time fraud predictions
-- View key risk indicators
+#### 📊 Dashboard
+- 8 KPIs: users, suspicious users, trades, deposits, fraud rate, trade volume, avg deposit, low-volume traders
+- Fraud distribution donut and user activity histogram
+- Top trading pairs by USD volume and BTCNGN volatility trend
+- Table of the top rules-flagged suspicious users
 
-### Analytics Tab
-- Explore trading patterns
-- Analyze user segments
-- Study deposit behaviors
+#### 🔍 Fraud Detection
+- **Manual Entry** — type a user's figures into a form and analyse them
+- **Existing User Lookup** — pick a `user_id` from the dataset and compare the prediction against the actual label
+- **Batch Upload (CSV)** — score a whole file at once, with a risk-level breakdown
+- All three modes show per-model verdicts, consensus, and key risk indicators
+- Results download as CSV
+
+#### 📈 Analytics
+- Trading patterns, user segments, and deposit behaviour by day and hour
+- Deposit vs withdrawal scatter, coloured by suspicious status
+
+#### 🔬 Model Comparison
+- Model characteristics table
+- Accuracy / precision / recall / F1 on the held-out 20% test split
+- Consensus distribution across the held-out users
+
+#### ℹ️ About
+- Project documentation, fraud criteria, and tech stack
 
 ---
 
@@ -232,35 +251,27 @@ The app will open in your browser at `http://localhost:8501`.
 
 ### Feature Engineering
 
-**16 engineered features** including:
+The models take **16 features**, in this order (the authoritative list lives in
+`models/feature_columns.pkl`):
 
 1. **Deposit Metrics**
-   - Total deposited amount
-   - Deposit count
-   - Average deposit size
-   - First/last deposit timestamp
-   - Unique deposit assets
+   - `total_deposited`, `deposit_count`, `avg_deposit`
 
 2. **Withdrawal Metrics**
-   - Total withdrawn amount
-   - Withdrawal count
-   - Average withdrawal size
-   - First/last withdrawal timestamp
-   - Unique withdrawal assets
+   - `total_withdrawn`, `withdrawal_count`, `avg_withdrawal`
 
 3. **Trading Metrics**
-   - Total trade volume (USD)
-   - Trade count
-   - Average trade size
-   - Unique pairs traded
+   - `total_trade_volume_usd`, `trade_count`, `avg_trade_usd`, `unique_pairs_traded`
 
 4. **Derived Features**
-   - Deposit/withdrawal ratio
-   - Withdrawal/deposit ratio
-   - Hours from deposit to withdrawal
-   - Trade-to-deposit ratio
-   - Total unique assets
-   - Activity frequency
+   - `deposit_withdrawal_ratio`, `withdrawal_deposit_ratio`
+   - `hours_deposit_to_withdrawal`
+   - `trade_to_deposit_ratio`
+   - `total_unique_assets`, `activity_frequency`
+
+Timestamps and per-asset breakdowns are used to *build* these features but are not
+model inputs themselves. Infinities are clipped to `999` and nulls filled with `0`,
+matching `model_saver.py`.
 
 ### Fraud Labeling Logic
 
@@ -284,9 +295,26 @@ suspicious = (
 - **Configuration**: `class_weight='balanced'`, `max_iter=1000`
 
 #### 2. Random Forest
-- **Type**: Ensemble classifier
+- **Type**: Ensemble classifier (bagging)
 - **Advantages**: Handles non-linear patterns, feature importance
 - **Configuration**: `n_estimators=100`, `max_depth=10`, `class_weight='balanced'`
+
+#### 3. XGBoost
+- **Type**: Ensemble classifier (gradient boosting)
+- **Advantages**: Strongest overall performer, handles class imbalance well
+- **Configuration**: `n_estimators=100`, `max_depth=5`, `learning_rate=0.1`, `scale_pos_weight` set from the training class balance
+
+### Consensus Logic
+
+The app combines the three models rather than trusting any one of them. Given the
+number of "suspicious" votes and the average predicted probability:
+
+| Risk level | Condition |
+|------------|-----------|
+| **Extreme** | ≥2 votes **and** avg probability ≥ 0.70 |
+| **High**    | ≥2 votes |
+| **Medium**  | 1 vote, or avg probability in [0.40, 0.70) |
+| **Low**     | otherwise |
 
 ### Model Evaluation
 
@@ -294,27 +322,23 @@ suspicious = (
 
 **Justification**: In fraud detection, missing fraudsters (False Negatives) is more costly than false alarms (False Positives). We prioritize catching suspicious users even if it means some legitimate users get flagged for manual review.
 
+Metrics shown in the app are computed on the **held-out 20% test split** that
+`model_saver.py` set aside during training (recreated with the same
+`random_state=42`), not on the data the models were fitted to.
+
+> **Note on class imbalance**: only 5 of 1,199 users are labelled suspicious
+> (0.42%), so accuracy is close to meaningless here — a model that flags nobody
+> scores 99.6%. Read recall and precision instead, and treat the small positive
+> count as the main limitation of these numbers.
+
 ---
 
 ## 🖥️ Streamlit Interface
 
-### Dashboard View
-- Total users, suspicious users, trades, and deposits
-- Fraud distribution pie chart
-- User activity histogram
-- Daily trading volume trend
+The interface is documented under [Using the Interface](#4-using-the-interface).
 
-### Fraud Detection Tool
-- Manual user data entry
-- Real-time predictions from both models
-- Fraud probability scores
-- Key risk indicator analysis
-
-### Analytics Section
-- Trading volume distribution
-- User segmentation
-- Hourly deposit patterns
-- Interactive filtering
+The app ships a dark theme pinned in `.streamlit/config.toml`; every Plotly figure
+is styled through a single helper so charts and cards stay consistent.
 
 ---
 
@@ -331,13 +355,16 @@ suspicious = (
 - Peak deposit day: **Friday** (671 deposits)
 - Peak deposit hour: **15:00** (162 deposits)
 - BTCNGN shows high volatility with 7-day rolling average
+- 2,324 trades across 50 pairs; NGN-quoted pairs dominate volume
 
 ### Part 2: Fraud Detection
 
 - **Total Users Analyzed**: 1,199
 - **Suspicious Users Identified**: 5
 - **Fraud Rate**: 0.42%
-- **Model Performance**: High precision and recall (test on your data)
+- **Model Performance**: see the Model Comparison page — it computes accuracy,
+  precision, recall and F1 live on the held-out test split rather than quoting
+  fixed numbers here
 
 ### Part 3: Strategic Recommendation
 
@@ -354,24 +381,14 @@ Target users with:
 
 ## 🛠️ Development
 
-### Running Tests
-
-```bash
-pytest tests/
-```
-
-### Code Formatting
-
-```bash
-black .
-flake8 .
-```
+There is no automated test suite yet — see [Future Enhancements](#-future-enhancements).
+Changes are currently verified by running the app and exercising each page.
 
 ### Adding New Features
 
 1. Create feature branch: `git checkout -b feature/your-feature`
 2. Make changes
-3. Run tests: `pytest`
+3. Run the app and check the affected pages: `streamlit run streamlit_app.py`
 4. Commit: `git commit -m "Add feature"`
 5. Push: `git push origin feature/your-feature`
 6. Create Pull Request
@@ -400,7 +417,8 @@ data/
 
 ### Issue: XGBoost installation fails
 
-**Solution**: XGBoost is optional. The app works with Logistic Regression and Random Forest.
+**Solution**: XGBoost is required — the app loads all three models and will report
+missing artifacts without it.
 
 On Windows:
 ```bash
@@ -454,16 +472,10 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 👨‍💻 Author
 
-**Abdulbasit Olanrewaju Gbolahan**  
-- December 2025
+**Abdulbasit Olanrewaju Gbolahan**
+- Built December 2025, updated August 2026
 
 ---
 
@@ -487,8 +499,10 @@ For questions or support:
 
 ## 🔮 Future Enhancements
 
+- [ ] Automated test suite (`pytest`) covering feature engineering and consensus logic
 - [ ] Real-time data streaming integration
-- [ ] Advanced ensemble models (XGBoost, LightGBM)
+- [x] Ensemble with XGBoost
+- [ ] Additional boosted models (LightGBM, CatBoost)
 - [ ] Deep learning approaches (LSTM for time-series)
 - [ ] Automated model retraining pipeline
 - [ ] A/B testing framework
@@ -504,4 +518,4 @@ For questions or support:
 
 ---
 
-*Last Updated: December 19, 2025*
+*Last Updated: August 9, 2026*
